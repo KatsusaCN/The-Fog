@@ -14,14 +14,14 @@ unsigned char code title[][20]=
 	{"4:wrong at start"},
 	{"5:Amnesia"}
 };
-unsigned char code map_1[]=
+unsigned char xdata map_1[]=
 {
 1,1,1,0,
 1,0,0,0,
 1,0,1,1,
 0,0,0,1
 };
-unsigned char code map_2[]=
+unsigned char xdata map_2[]=
 {
 1,0,0,0,0,0,
 0,0,1,1,1,1,
@@ -30,7 +30,7 @@ unsigned char code map_2[]=
 1,0,0,0,1,0,
 0,0,1,0,0,0
 };
-unsigned char code map_3[]=
+unsigned char xdata map_3[]=
 {
 1,0,0,0,0,0,1,0,
 1,1,0,1,1,1,1,0,
@@ -41,7 +41,7 @@ unsigned char code map_3[]=
 0,0,0,0,1,0,0,0,
 0,1,0,1,0,0,1,1
 };
-unsigned char code map_4[]=
+unsigned char xdata map_4[]=
 {
 1,0,0,0,0,0,0,0,0,0,
 1,1,0,1,1,1,1,1,1,1,
@@ -54,23 +54,39 @@ unsigned char code map_4[]=
 0,1,0,0,0,0,1,1,0,1,
 0,0,0,1,0,1,1,1,0,0
 };
-unsigned char code map_5[]=
+unsigned char xdata map_5[]=
 {
 1,1,1,1,1,0,0,0,0,10,13,0,
 1,0,0,0,0,0,1,1,1,1,1,15,
 1,1,0,1,1,1,0,0,0,0,12,0,
 0,1,0,0,0,0,0,1,1,1,1,1,
-0,0,1,0,1,1,0,0,0,1,7,0,
+0,0,1,0,1,1,0,0,0,1,5,0,
 1,0,0,0,1,0,1,1,0,1,1,0,
 0,1,1,1,1,0,0,0,0,1,0,0,
-0,0,0,1,1,8,1,1,1,1,0,1,
+0,0,0,1,1,6,1,1,1,1,0,1,
 1,1,0,0,0,0,0,0,0,0,0,1,
 1,0,0,1,1,1,1,1,0,1,1,1,
 1,3,1,1,0,2,1,0,0,0,0,1,
 0,0,0,0,0,1,1,1,1,1,1,1
 };
 
-unsigned char code *(maps[])={map_1,map_2,map_3,map_4,map_5};
+unsigned char code map_5_code[]=
+{
+1,1,1,1,1,0,0,0,0,10,13,0,
+1,0,0,0,0,0,1,1,1,1,1,15,
+1,1,0,1,1,1,0,0,0,0,12,0,
+0,1,0,0,0,0,0,1,1,1,1,1,
+0,0,1,0,1,1,0,0,0,1,5,0,
+1,0,0,0,1,0,1,1,0,1,1,0,
+0,1,1,1,1,0,0,0,0,1,0,0,
+0,0,0,1,1,6,1,1,1,1,0,1,
+1,1,0,0,0,0,0,0,0,0,0,1,
+1,0,0,1,1,1,1,1,0,1,1,1,
+1,3,1,1,0,2,1,0,0,0,0,1,
+0,0,0,0,0,1,1,1,1,1,1,1
+};
+
+unsigned char xdata *(maps[])={map_1,map_2,map_3,map_4,map_5};
 char xdata x,y,CoverMark=1,sel=0;
 int xdata rx,ry; 
 
@@ -101,7 +117,7 @@ int Ex_y(unsigned char y)
 
 void main()
 {
-	unsigned char i,j;
+	unsigned char i,j,DuoMark;
 	Timer0_Init();
 	Keyinit();
 	OLEDinit();
@@ -202,41 +218,49 @@ void main()
 				if(PageMark==1)
 				{
 					Ds1302Write(0xC0,NowLevel);
+					DuoMark=0;
 					StrWriting(0,title[NowLevel-1],0,0,0);
 					StrWriting(1,title[NowLevel-1],0,0,0);
+					if(NowLevel==5)
+					{
+						for(i=0;i<=143;i++) map_5[i]=map_5_code[i];
+					}
 					for(i=0;i<NowLevel*2+4;i++)
 					{
 						for(j=0;j<NowLevel*2+4;j++)
 						{
-							if((i==0||i==NowLevel*2+3) || (j==0||j==NowLevel*2+3))//±ßÔµÇ½Ìå
+							if(Ex_y(j)>16)
 							{
-								PicWriting_Cover(0,wall_0,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
-								PicWriting_Cover(1,wall_0,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
-								if(j>0 && (i==0 || i==NowLevel*2+3))
+								if((i==0||i==NowLevel*2+3) || (j==0||j==NowLevel*2+3))//±ßÔµÇ½Ìå
 								{
-									PicWriting_Overlay(0,wall_1,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
-									PicWriting_Overlay(1,wall_1,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+									PicWriting_Cover(0,wall_0,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+									PicWriting_Cover(1,wall_0,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+									if(j>0 && (i==0 || i==NowLevel*2+3))
+									{
+										PicWriting_Overlay(0,wall_1,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+										PicWriting_Overlay(1,wall_1,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+									}
+									if(j<NowLevel*2+3 && (i==0 || i==NowLevel*2+3))
+									{
+										PicWriting_Overlay(0,wall_2,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+										PicWriting_Overlay(1,wall_2,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+									}
+									if(i>0 && (j==0 || j==NowLevel*2+3))
+									{
+										PicWriting_Overlay(0,wall_3,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+										PicWriting_Overlay(1,wall_3,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+									}
+									if(i<NowLevel*2+3 && (j==0 || j==NowLevel*2+3))
+									{
+										PicWriting_Overlay(0,wall_4,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+										PicWriting_Overlay(1,wall_4,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+									}
 								}
-								if(j<NowLevel*2+3 && (i==0 || i==NowLevel*2+3))
+								else//Õ½ÕùÃÔÎí
 								{
-									PicWriting_Overlay(0,wall_2,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
-									PicWriting_Overlay(1,wall_2,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+									PicWriting_Cover(0,fogs[0],4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+									PicWriting_Cover(1,fogs[1],4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
 								}
-								if(i>0 && (j==0 || j==NowLevel*2+3))
-								{
-									PicWriting_Overlay(0,wall_3,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
-									PicWriting_Overlay(1,wall_3,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
-								}
-								if(i<NowLevel*2+3 && (j==0 || j==NowLevel*2+3))
-								{
-									PicWriting_Overlay(0,wall_4,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
-									PicWriting_Overlay(1,wall_4,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
-								}
-							}
-							else//Õ½ÕùÃÔÎí
-							{
-								PicWriting_Cover(0,fogs[0],4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
-								PicWriting_Cover(1,fogs[1],4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
 							}
 						}
 					}
@@ -256,10 +280,36 @@ void main()
 					}
 				}
 				KeyScan();
-				if((x+(key[6]-key[4])>=0) && (x+(key[6]-key[4])<=(NowLevel*2+1)) && maps[NowLevel-1][y*(Nowlevel+1)*2+(x+key[6]-key[4])] == 0) x=x+(key[6]-key[4]);
-				if((y+(key[5]-key[1])>=0) && (y+(key[5]-key[1])<=(NowLevel*2+1)) && maps[NowLevel-1][(y+key[5]-key[1])*(Nowlevel+1)*2+x] == 0) y=y+(key[5]-key[1]);
+				if((x+(key[6]-key[4])>=0) && (x+(key[6]-key[4])<=(NowLevel*2+1)) && (maps[NowLevel-1][y*(Nowlevel+1)*2+(x+key[6]-key[4])])%2 == 0) x=x+(key[6]-key[4]);
+				if((y+(key[5]-key[1])>=0) && (y+(key[5]-key[1])<=(NowLevel*2+1)) && (maps[NowLevel-1][(y+key[5]-key[1])*(Nowlevel+1)*2+x])%2 == 0) y=y+(key[5]-key[1]);
 				if(key[5]!=key[1]) dic=(key[5]-key[1]+1)/2;
 				if(key[6]!=key[4]) dic=2+(key[6]-key[4]+1)/2;
+				if((maps[NowLevel-1][y*(Nowlevel+1)*2+x]) == 2)
+				{
+					maps[NowLevel-1][y*(Nowlevel+1)*2+x]=0;
+					for(i=0;i<=Nowlevel*2+1;i++)
+					{
+						for(j=0;j<=Nowlevel*2+1;j++)
+						{
+							if(maps[NowLevel-1][i*(Nowlevel+1)*2+j]>=3) maps[NowLevel-1][i*(Nowlevel+1)*2+j]-=3;
+						}
+					}
+				}
+				if(maps[NowLevel-1][y*(Nowlevel+1)*2+x] == 4 || maps[NowLevel-1][y*(Nowlevel+1)*2+x] == 6)
+				{
+					if(DuoMark==0) DuoMark=maps[NowLevel-1][y*(Nowlevel+1)*2+x];
+					else if(maps[NowLevel-1][y*(Nowlevel+1)*2+x] != DuoMark)
+					{
+						for(i=0;i<=Nowlevel*2+1;i++)
+						{
+							for(j=0;j<=Nowlevel*2+1;j++)
+							{
+								if(maps[NowLevel-1][i*(Nowlevel+1)*2+j] == DuoMark+3) maps[NowLevel-1][i*(Nowlevel+1)*2+j]=0;
+								if(maps[NowLevel-1][i*(Nowlevel+1)*2+j] == maps[NowLevel-1][y*(Nowlevel+1)*2+x]+3) maps[NowLevel-1][i*(Nowlevel+1)*2+j]=1;
+							}			
+						}
+					}
+				}
 				PicWriting_Cover(0,mes[dic],4,4,Ex_x(x),Ex_y(y));
 				PicWriting_Cover(1,mes[dic],4,4,Ex_x(x),Ex_y(y));
 				for(i=0;i<3;i++)
@@ -269,7 +319,7 @@ void main()
 						if(i==1 && j==1) continue;
 						if((x+i-1)>=0 && (x+i-1)<=(NowLevel*2+1) && (y+j-1)>=0 && (y+j-1)<=(NowLevel*2+1))
 						{
-							if(maps[NowLevel-1][(y+j-1)*(Nowlevel+1)*2+x+i-1]==0)
+							if(maps[NowLevel-1][(y+j-1)*(Nowlevel+1)*2+x+i-1]%2 ==0)
 							{
 								if(x+i-1==NowLevel*2+1 && y+j-1==0)
 								{
@@ -286,22 +336,22 @@ void main()
 							{
 								PicWriting_Cover(0,wall_0,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
 								PicWriting_Cover(1,wall_0,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-								if(x+i-2>=0 && maps[NowLevel-1][(y+j-1)*(Nowlevel+1)*2+x+i-2]==1)
+								if(x+i-2>=0 && maps[NowLevel-1][(y+j-1)*(Nowlevel+1)*2+x+i-2]%2==1)
 								{
 									PicWriting_Overlay(0,wall_3,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
 									PicWriting_Overlay(1,wall_3,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
 								}
-								if(x+i<=(NowLevel*2+1) && maps[NowLevel-1][(y+j-1)*(Nowlevel+1)*2+x+i]==1)
+								if(x+i<=(NowLevel*2+1) && maps[NowLevel-1][(y+j-1)*(Nowlevel+1)*2+x+i]%2==1)
 								{
 									PicWriting_Overlay(0,wall_4,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
 									PicWriting_Overlay(1,wall_4,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
 								}
-								if(y+j-2>=0 && maps[NowLevel-1][(y+j-2)*(Nowlevel+1)*2+x+i-1]==1)
+								if(y+j-2>=0 && maps[NowLevel-1][(y+j-2)*(Nowlevel+1)*2+x+i-1]%2==1)
 								{
 									PicWriting_Overlay(0,wall_1,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
 									PicWriting_Overlay(1,wall_1,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
 								}
-								if(y+j<=(NowLevel*2+1) && maps[NowLevel-1][(y+j)*(Nowlevel+1)*2+x+i-1]==1)
+								if(y+j<=(NowLevel*2+1) && maps[NowLevel-1][(y+j)*(Nowlevel+1)*2+x+i-1]%2==1)
 								{
 									PicWriting_Overlay(0,wall_2,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
 									PicWriting_Overlay(1,wall_2,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
@@ -316,14 +366,17 @@ void main()
 				}
 				if(x==NowLevel*2+1 && y==0)
 				{
-					if(NowLevel==5);
+					if(NowLevel==5)
+					{
+						page=0;
+					}
 					else
 					{
 						Refresh(0);
 						PicClean(1,128,64,0,0);
 						rx=Ex_x(x);ry=Ex_y(y);
 						CoverMark=(FrameNum-1)%20;
-						for(i=1;i<=3;i++)
+						for(i=1;i<=2;i++)
 						{
 							while(CoverMark!=(FrameNum+11)%20);
 							PicClean(0,4,4,rx,ry);
@@ -332,6 +385,7 @@ void main()
 							PicWriting_Cover(0,mes[dic],4,4,rx,ry);
 							Refresh(0);
 						}
+						while(CoverMark!=(FrameNum+11)%20);
 						for(;rx>=64-4*(Nowlevel+2);rx--,ry++)
 						{
 							PicWriting_Cover(1,mes[dic],4,4,rx,ry);
