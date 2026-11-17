@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   MAIN                                                              11/17/2026 13:33:21 PAGE 1   
+C51 COMPILER V9.60.7.0   MAIN                                                              11/17/2026 22:52:09 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
@@ -14,7 +14,7 @@ line level    source
    4          #include"Keyboard.h"
    5          #include"ds1302.h"
    6          #define Nowlevel NowLevel
-   7          unsigned char xdata RefMark=0,FrameNum=0,dic=0,page=0,PageMark=1,dat,NowLevel;
+   7          unsigned char xdata RefMark=0,FrameNum=0,dic=0,page=0,PageMark=1,dat,NowLevel,ModeMark=1;
    8          //RefMark£ºÖ¡Ë¢ÐÂ±êÖ¾£»FrameNum£ºµÚ¼¸Ö¡£»dic£º³¯Ïò£»page£ºµÚ¼¸Ò³£»PageMark£º·­Ò³±êÖ¾£»CoverMark£º·âÃæ±êÊ¶£
              -»dat£º´æµµ£»NowLevel£ºµ±Ç°¹Ø¿¨£»sel£ºÑ¡Ïî±êÖ¾£»
    9          unsigned char code title[][20]=
@@ -62,7 +62,7 @@ line level    source
   51          0,0,1,0,1,0,1,0,0,0,
   52          1,0,1,0,0,0,1,0,1,0,
   53          0,0,1,1,1,0,0,0,0,1,
-C51 COMPILER V9.60.7.0   MAIN                                                              11/17/2026 13:33:21 PAGE 2   
+C51 COMPILER V9.60.7.0   MAIN                                                              11/17/2026 22:52:09 PAGE 2   
 
   54          0,1,0,0,0,0,1,1,0,1,
   55          0,0,0,1,0,1,1,1,0,0
@@ -126,7 +126,7 @@ line level    source
  113          int Ex_y(unsigned char y)
  114          {
  115   1        return 40-4*(Nowlevel+1-y);
-C51 COMPILER V9.60.7.0   MAIN                                                              11/17/2026 13:33:21 PAGE 3   
+C51 COMPILER V9.60.7.0   MAIN                                                              11/17/2026 22:52:09 PAGE 3   
 
  116   1      } 
  117          
@@ -184,256 +184,414 @@ line level    source
  169   4                else if(dat<=5)
  170   4                {
  171   5                  page=1;
- 172   5                  NowLevel=dat;
- 173   5                }
- 174   4                PageMark=1;
- 175   4                break;
- 176   4              }
- 177   3              if(FrameNum/10!=CoverMark)
-C51 COMPILER V9.60.7.0   MAIN                                                              11/17/2026 13:33:21 PAGE 4   
+ 172   5                  CoverMark=0;
+ 173   5                  NowLevel=dat;
+ 174   5                }
+ 175   4                else
+ 176   4                {
+ 177   5                  page=1;
+C51 COMPILER V9.60.7.0   MAIN                                                              11/17/2026 22:52:09 PAGE 4   
 
- 178   3              {
- 179   4                CoverMark=FrameNum/10;
- 180   4                Refresh(CoverMark);
+ 178   5                }
+ 179   4                PageMark=1;
+ 180   4                break;
  181   4              }
- 182   3              RefMark=0;
- 183   3              break;
- 184   3            case 1:
- 185   3              if(PageMark==1)
- 186   3              {
- 187   4                dic=3;
- 188   4                StrWriting(0,"MENU",48,0,0);
- 189   4                StrWriting(0,"Continue",32,16,0);
- 190   4                StrWriting(0,"Reset",44,32,0);
- 191   4                PageMark=0;
- 192   4              }
- 193   3              KeyScan();
- 194   3              sel=(sel+key[5]-key[1])%2;
- 195   3              PicClean(0,4,4,38,38);
- 196   3              PicClean(0,4,4,26,22);
- 197   3              if(sel==0) PicWriting_Cover(0,mes[dic],4,4,26,22);
- 198   3              else if(sel==1) PicWriting_Cover(0,mes[dic],4,4,38,38);
- 199   3              if(key[0]==1)
- 200   3              {
- 201   4                if(sel==0)
- 202   4                {
- 203   5                  dic=0;
- 204   5                  page=2;
- 205   5                }
- 206   4                else if(sel==1)
- 207   4                {
- 208   5                  Ds1302Write(0xC0,0x00);
- 209   5                  dat=0;
- 210   5                  page=0;
- 211   5                }
- 212   4                PageMark=1;
- 213   4              }
- 214   3              Refresh(0);
- 215   3              RefMark=0;
- 216   3              break;
- 217   3            case 2:
- 218   3              if(PageMark==1)
- 219   3              {
- 220   4                Ds1302Write(0xC0,NowLevel);
- 221   4                DuoMark=0;
- 222   4                StrWriting(0,title[NowLevel-1],0,0,0);
- 223   4                StrWriting(1,title[NowLevel-1],0,0,0);
- 224   4                if(NowLevel==5)
- 225   4                {
- 226   5                  for(i=0;i<=143;i++) map_5[i]=map_5_code[i];
- 227   5                }
- 228   4                for(i=0;i<NowLevel*2+4;i++)
- 229   4                {
- 230   5                  for(j=0;j<NowLevel*2+4;j++)
- 231   5                  {
- 232   6                    if(Ex_y(j)>16)
- 233   6                    {
- 234   7                      if((i==0||i==NowLevel*2+3) || (j==0||j==NowLevel*2+3))//±ßÔµÇ½Ìå
- 235   7                      {
- 236   8                        PicWriting_Cover(0,wall_0,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
- 237   8                        PicWriting_Cover(1,wall_0,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
- 238   8                        if(j>0 && (i==0 || i==NowLevel*2+3))
- 239   8                        {
-C51 COMPILER V9.60.7.0   MAIN                                                              11/17/2026 13:33:21 PAGE 5   
+ 182   3              if(FrameNum/10!=CoverMark)
+ 183   3              {
+ 184   4                CoverMark=FrameNum/10;
+ 185   4                Refresh(CoverMark);
+ 186   4              }
+ 187   3              RefMark=0;
+ 188   3              break;
+ 189   3            case 1:
+ 190   3              if(PageMark==1)
+ 191   3              {
+ 192   4                dic=3;
+ 193   4                if(CoverMark==0)
+ 194   4                {
+ 195   5                  StrWriting(0,"MENU",48,0,0);
+ 196   5                  sel=0;
+ 197   5                  switch(dat)
+ 198   5                  {
+ 199   6                    case 1:
+ 200   6                    case 2:
+ 201   6                    case 3:
+ 202   6                    case 4:
+ 203   6                    case 5:
+ 204   6                      StrWriting(0,"Continue",32,16,0);
+ 205   6                      StrWriting(0,"Reset",44,32,0);
+ 206   6                      break;
+ 207   6                    case 6:
+ 208   6                      StrWriting(0,"Selection",28,16,0);
+ 209   6                      StrWriting(0,"Reset",44,32,0);
+ 210   6                      break;
+ 211   6                  }
+ 212   5                }
+ 213   4                else if(CoverMark==1)
+ 214   4                {
+ 215   5                  sel=0;
+ 216   5                  StrWriting(0,"1      2",32,16,0);
+ 217   5                  StrWriting(0,"3      4",32,16,0);
+ 218   5                  StrWriting(0,"5      6",32,16,0);
+ 219   5                }
+ 220   4                else
+ 221   4                {
+ 222   5                  sel=1;
+ 223   5                  StrWriting(0,"clear",44,16,0);
+ 224   5                  StrWriting(0,"foggy",44,32,0);
+ 225   5                  StrWriting(0,"blind",44,48,0);
+ 226   5                }
+ 227   4                PageMark=0;
+ 228   4              }
+ 229   3              KeyScan();
+ 230   3              if(key[0]==1)
+ 231   3              {
+ 232   4                switch(CoverMark)
+ 233   4                {
+ 234   5                  case 0:
+ 235   5                    if(dat<6)
+ 236   5                    {
+ 237   6                      if(sel==0)
+ 238   6                      {
+ 239   7                        dic=0;
+C51 COMPILER V9.60.7.0   MAIN                                                              11/17/2026 22:52:09 PAGE 5   
 
- 240   9                          PicWriting_Overlay(0,wall_1,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
- 241   9                          PicWriting_Overlay(1,wall_1,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
- 242   9                        }
- 243   8                        if(j<NowLevel*2+3 && (i==0 || i==NowLevel*2+3))
- 244   8                        {
- 245   9                          PicWriting_Overlay(0,wall_2,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
- 246   9                          PicWriting_Overlay(1,wall_2,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
- 247   9                        }
- 248   8                        if(i>0 && (j==0 || j==NowLevel*2+3))
- 249   8                        {
- 250   9                          PicWriting_Overlay(0,wall_3,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
- 251   9                          PicWriting_Overlay(1,wall_3,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
- 252   9                        }
- 253   8                        if(i<NowLevel*2+3 && (j==0 || j==NowLevel*2+3))
- 254   8                        {
- 255   9                          PicWriting_Overlay(0,wall_4,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
- 256   9                          PicWriting_Overlay(1,wall_4,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
- 257   9                        }
- 258   8                      }
- 259   7                      else//Õ½ÕùÃÔÎí
- 260   7                      {
- 261   8                        PicWriting_Cover(0,fogs[0],4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
- 262   8                        PicWriting_Cover(1,fogs[1],4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
- 263   8                      }
- 264   7                    }
- 265   6                  }
- 266   5                }
- 267   4                x=0;
- 268   4                y=NowLevel*2+1;
- 269   4                PageMark=0;
- 270   4              }
- 271   3              for(i=0;i<3;i++)
- 272   3              {
- 273   4                for(j=0;j<=3;j++)
- 274   4                {
- 275   5                  if((x+i-1)>=0 && (x+i-1)<=(NowLevel*2+1) && (y+j-1)>=0 && (y+j-1)<=(NowLevel*2+1))
- 276   5                  {
- 277   6                    PicWriting_Cover(0,fogs[0],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
- 278   6                    PicWriting_Cover(1,fogs[1],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
- 279   6                  }
- 280   5                }
- 281   4              }
- 282   3              KeyScan();
- 283   3              if((x+(key[6]-key[4])>=0) && (x+(key[6]-key[4])<=(NowLevel*2+1)) && (maps[NowLevel-1][y*(Nowlevel+1)*2
+ 240   7                        page=2;
+ 241   7                      }
+ 242   6                      else
+ 243   6                      {
+ 244   7                        Ds1302Write(0xC0,0x00);
+ 245   7                        dat=0;
+ 246   7                        page=0;
+ 247   7                      }
+ 248   6                    }
+ 249   5                    else
+ 250   5                    {
+ 251   6                      if(sel==0)
+ 252   6                      {
+ 253   7                        CoverMark=1;
+ 254   7                      }
+ 255   6                      else
+ 256   6                      {
+ 257   7                        Ds1302Write(0xC0,0x00);
+ 258   7                        dat=0;
+ 259   7                        page=0;
+ 260   7                      }
+ 261   6                    }
+ 262   5                    break;
+ 263   5                  case 1:
+ 264   5                    NowLevel=sel+1;
+ 265   5                    CoverMark=2;
+ 266   5                    break;
+ 267   5                  case 2:
+ 268   5                    ModeMark=sel;
+ 269   5                    dic=0;
+ 270   5                    page=2;
+ 271   5                }
+ 272   4                PageMark=1;
+ 273   4                break;
+ 274   4              }
+ 275   3              switch(CoverMark)
+ 276   3              {
+ 277   4                case 0:
+ 278   4                  sel=(sel+key[5]-key[1])%2;
+ 279   4                  if(dat<6)
+ 280   4                  {
+ 281   5                    PicClean(0,4,4,38,38);
+ 282   5                    PicClean(0,4,4,26,22);
+ 283   5                    if(sel==0) PicWriting_Cover(0,mes[dic],4,4,26,22);
+ 284   5                    else if(sel==1) PicWriting_Cover(0,mes[dic],4,4,38,38);
+ 285   5                  }
+ 286   4                  else
+ 287   4                  {
+ 288   5                    PicClean(0,4,4,38,38);
+ 289   5                    PicClean(0,4,4,22,22);
+ 290   5                    if(sel==0) PicWriting_Cover(0,mes[dic],4,4,22,22);
+ 291   5                    else if(sel==1) PicWriting_Cover(0,mes[dic],4,4,38,38);
+ 292   5                  }
+ 293   4                  break;
+ 294   4                case 1:
+ 295   4                  sel=(sel+(key[5]-key[1])*2+(key[6]-key[4]))%6;
+ 296   4                  PicClean(0,4,4,26,22);PicClean(0,4,4,82,22);
+ 297   4                  PicClean(0,4,4,26,38);PicClean(0,4,4,82,38);
+ 298   4                  PicClean(0,4,4,26,54);PicClean(0,4,4,82,54);
+ 299   4                  PicWriting_Cover(0,mes[dic],4,4,26+56*(sel%2),22+16*(sel/2));
+ 300   4                  break;
+ 301   4                case 2:
+C51 COMPILER V9.60.7.0   MAIN                                                              11/17/2026 22:52:09 PAGE 6   
+
+ 302   4                  sel=(sel+key[5]-key[1])%3;
+ 303   4                  PicClean(0,4,4,34,22);
+ 304   4                  PicClean(0,4,4,34,38);
+ 305   4                  PicClean(0,4,4,34,54);
+ 306   4                  PicWriting_Cover(0,mes[dic],4,4,34,22+16*sel);
+ 307   4              }
+ 308   3              Refresh(0);
+ 309   3              RefMark=0;
+ 310   3              break;
+ 311   3            case 2:
+ 312   3              if(PageMark==1)
+ 313   3              {
+ 314   4                if(dat<6)
+ 315   4                {
+ 316   5                  dat=NowLevel;
+ 317   5                  Ds1302Write(0xC0,NowLevel);
+ 318   5                }
+ 319   4                DuoMark=0;
+ 320   4                StrWriting(0,title[NowLevel-1],0,0,0);
+ 321   4                StrWriting(1,title[NowLevel-1],0,0,0);
+ 322   4                if(NowLevel==5)
+ 323   4                {
+ 324   5                  for(i=0;i<=143;i++) map_5[i]=map_5_code[i];
+ 325   5                }
+ 326   4                for(i=0;i<NowLevel*2+4;i++)
+ 327   4                {
+ 328   5                  for(j=0;j<NowLevel*2+4;j++)
+ 329   5                  {
+ 330   6                    if(Ex_y(j)>16)
+ 331   6                    {
+ 332   7                      if((i==0||i==NowLevel*2+3) || (j==0||j==NowLevel*2+3))//±ßÔµÇ½Ìå
+ 333   7                      {
+ 334   8                        PicWriting_Cover(0,wall_0,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+ 335   8                        PicWriting_Cover(1,wall_0,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+ 336   8                        if(j>0 && (i==0 || i==NowLevel*2+3))
+ 337   8                        {
+ 338   9                          PicWriting_Overlay(0,wall_1,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+ 339   9                          PicWriting_Overlay(1,wall_1,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+ 340   9                        }
+ 341   8                        if(j<NowLevel*2+3 && (i==0 || i==NowLevel*2+3))
+ 342   8                        {
+ 343   9                          PicWriting_Overlay(0,wall_2,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+ 344   9                          PicWriting_Overlay(1,wall_2,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+ 345   9                        }
+ 346   8                        if(i>0 && (j==0 || j==NowLevel*2+3))
+ 347   8                        {
+ 348   9                          PicWriting_Overlay(0,wall_3,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+ 349   9                          PicWriting_Overlay(1,wall_3,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+ 350   9                        }
+ 351   8                        if(i<NowLevel*2+3 && (j==0 || j==NowLevel*2+3))
+ 352   8                        {
+ 353   9                          PicWriting_Overlay(0,wall_4,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+ 354   9                          PicWriting_Overlay(1,wall_4,4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+ 355   9                        }
+ 356   8                      }
+ 357   7                      else//Õ½ÕùÃÔÎí
+ 358   7                      {
+ 359   8                        PicWriting_Cover(0,fogs[0],4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+ 360   8                        PicWriting_Cover(1,fogs[1],4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+ 361   8                      }
+ 362   7                    }
+ 363   6                  }
+C51 COMPILER V9.60.7.0   MAIN                                                              11/17/2026 22:52:09 PAGE 7   
+
+ 364   5                }
+ 365   4                x=0;
+ 366   4                y=NowLevel*2+1;
+ 367   4                PageMark=0;
+ 368   4              }
+ 369   3              for(i=0;i<3;i++)
+ 370   3              {
+ 371   4                for(j=0;j<=3;j++)
+ 372   4                {
+ 373   5                  if((x+i-1)>=0 && (x+i-1)<=(NowLevel*2+1) && (y+j-1)>=0 && (y+j-1)<=(NowLevel*2+1))
+ 374   5                  {
+ 375   6                    switch(ModeMark)
+ 376   6                    {
+ 377   7                      case 2:
+ 378   7                        PicWriting_Cover(0,blinds[(x+i-1+y+j-1)%2],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 379   7                        PicWriting_Cover(1,blinds[(x+i-1+y+j)%2],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 380   7                        break;
+ 381   7                      case 1:
+ 382   7                        PicWriting_Cover(0,fogs[0],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 383   7                        PicWriting_Cover(1,fogs[1],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 384   7                        break;
+ 385   7                    }
+ 386   6                  }
+ 387   5                }
+ 388   4              }
+ 389   3              //ÉÏ´ÎÐÞ¸ÄÎ»ÖÃ£º¸÷¸öÄ£Ê½ÏÂµØÍ¼äÖÈ¾¹æÔò
+ 390   3              KeyScan();
+ 391   3              if((x+(key[6]-key[4])>=0) && (x+(key[6]-key[4])<=(NowLevel*2+1)) && (maps[NowLevel-1][y*(Nowlevel+1)*2
              -+(x+key[6]-key[4])])%2 == 0) x=x+(key[6]-key[4]);
- 284   3              if((y+(key[5]-key[1])>=0) && (y+(key[5]-key[1])<=(NowLevel*2+1)) && (maps[NowLevel-1][(y+key[5]-key[1]
+ 392   3              if((y+(key[5]-key[1])>=0) && (y+(key[5]-key[1])<=(NowLevel*2+1)) && (maps[NowLevel-1][(y+key[5]-key[1]
              -)*(Nowlevel+1)*2+x])%2 == 0) y=y+(key[5]-key[1]);
- 285   3              if(key[5]!=key[1]) dic=(key[5]-key[1]+1)/2;
- 286   3              if(key[6]!=key[4]) dic=2+(key[6]-key[4]+1)/2;
- 287   3              if((maps[NowLevel-1][y*(Nowlevel+1)*2+x]) == 2)
- 288   3              {
- 289   4                maps[NowLevel-1][y*(Nowlevel+1)*2+x]=0;
- 290   4                for(i=0;i<=Nowlevel*2+1;i++)
- 291   4                {
- 292   5                  for(j=0;j<=Nowlevel*2+1;j++)
- 293   5                  {
- 294   6                    if(maps[NowLevel-1][i*(Nowlevel+1)*2+j]>=3) maps[NowLevel-1][i*(Nowlevel+1)*2+j]-=3;
- 295   6                  }
- 296   5                }
- 297   4              }
- 298   3              if(maps[NowLevel-1][y*(Nowlevel+1)*2+x] == 4 || maps[NowLevel-1][y*(Nowlevel+1)*2+x] == 6)
- 299   3              {
-C51 COMPILER V9.60.7.0   MAIN                                                              11/17/2026 13:33:21 PAGE 6   
-
- 300   4                if(DuoMark==0) DuoMark=maps[NowLevel-1][y*(Nowlevel+1)*2+x];
- 301   4                else if(maps[NowLevel-1][y*(Nowlevel+1)*2+x] != DuoMark)
- 302   4                {
- 303   5                  for(i=0;i<=Nowlevel*2+1;i++)
- 304   5                  {
- 305   6                    for(j=0;j<=Nowlevel*2+1;j++)
- 306   6                    {
- 307   7                      if(maps[NowLevel-1][i*(Nowlevel+1)*2+j] == DuoMark+3) maps[NowLevel-1][i*(Nowlevel+1)*2+j]=0;
- 308   7                      if(maps[NowLevel-1][i*(Nowlevel+1)*2+j] == maps[NowLevel-1][y*(Nowlevel+1)*2+x]+3) maps[NowLevel-1
+ 393   3              if(key[5]!=key[1]) dic=(key[5]-key[1]+1)/2;
+ 394   3              if(key[6]!=key[4]) dic=2+(key[6]-key[4]+1)/2;
+ 395   3              if((maps[NowLevel-1][y*(Nowlevel+1)*2+x]) == 2)
+ 396   3              {
+ 397   4                maps[NowLevel-1][y*(Nowlevel+1)*2+x]=0;
+ 398   4                for(i=0;i<=Nowlevel*2+1;i++)
+ 399   4                {
+ 400   5                  for(j=0;j<=Nowlevel*2+1;j++)
+ 401   5                  {
+ 402   6                    if(maps[NowLevel-1][i*(Nowlevel+1)*2+j]>=3) maps[NowLevel-1][i*(Nowlevel+1)*2+j]-=3;
+ 403   6                  }
+ 404   5                }
+ 405   4              }
+ 406   3              if(maps[NowLevel-1][y*(Nowlevel+1)*2+x] == 4 || maps[NowLevel-1][y*(Nowlevel+1)*2+x] == 6)
+ 407   3              {
+ 408   4                if(DuoMark==0) DuoMark=maps[NowLevel-1][y*(Nowlevel+1)*2+x];
+ 409   4                else if(maps[NowLevel-1][y*(Nowlevel+1)*2+x] != DuoMark)
+ 410   4                {
+ 411   5                  for(i=0;i<=Nowlevel*2+1;i++)
+ 412   5                  {
+ 413   6                    for(j=0;j<=Nowlevel*2+1;j++)
+ 414   6                    {
+ 415   7                      if(maps[NowLevel-1][i*(Nowlevel+1)*2+j] == DuoMark+3) maps[NowLevel-1][i*(Nowlevel+1)*2+j]=0;
+ 416   7                      if(maps[NowLevel-1][i*(Nowlevel+1)*2+j] == maps[NowLevel-1][y*(Nowlevel+1)*2+x]+3) maps[NowLevel-1
              -][i*(Nowlevel+1)*2+j]=1;
- 309   7                    }     
- 310   6                  }
- 311   5                }
- 312   4              }
- 313   3              PicWriting_Cover(0,mes[dic],4,4,Ex_x(x),Ex_y(y));
- 314   3              PicWriting_Cover(1,mes[dic],4,4,Ex_x(x),Ex_y(y));
- 315   3              for(i=0;i<3;i++)
- 316   3              {
- 317   4                for(j=0;j<3;j++)
- 318   4                {
- 319   5                  if(i==1 && j==1) continue;
- 320   5                  if((x+i-1)>=0 && (x+i-1)<=(NowLevel*2+1) && (y+j-1)>=0 && (y+j-1)<=(NowLevel*2+1))
- 321   5                  {
- 322   6                    if(maps[NowLevel-1][(y+j-1)*(Nowlevel+1)*2+x+i-1]%2 ==0)
- 323   6                    {
- 324   7                      if(x+i-1==NowLevel*2+1 && y+j-1==0)
- 325   7                      {
- 326   8                        PicWriting_Cover(0,final,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
- 327   8                        PicWriting_Cover(1,final,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
- 328   8                      }
- 329   7                      else
- 330   7                      {
- 331   8                        PicClean(0,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
- 332   8                        PicClean(1,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
- 333   8                      }
- 334   7                    }
- 335   6                    else
- 336   6                    {
- 337   7                      PicWriting_Cover(0,wall_0,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
- 338   7                      PicWriting_Cover(1,wall_0,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
- 339   7                      if(x+i-2>=0 && maps[NowLevel-1][(y+j-1)*(Nowlevel+1)*2+x+i-2]%2==1)
- 340   7                      {
- 341   8                        PicWriting_Overlay(0,wall_3,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
- 342   8                        PicWriting_Overlay(1,wall_3,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
- 343   8                      }
- 344   7                      if(x+i<=(NowLevel*2+1) && maps[NowLevel-1][(y+j-1)*(Nowlevel+1)*2+x+i]%2==1)
- 345   7                      {
- 346   8                        PicWriting_Overlay(0,wall_4,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
- 347   8                        PicWriting_Overlay(1,wall_4,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
- 348   8                      }
- 349   7                      if(y+j-2>=0 && maps[NowLevel-1][(y+j-2)*(Nowlevel+1)*2+x+i-1]%2==1)
- 350   7                      {
- 351   8                        PicWriting_Overlay(0,wall_1,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
- 352   8                        PicWriting_Overlay(1,wall_1,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
- 353   8                      }
- 354   7                      if(y+j<=(NowLevel*2+1) && maps[NowLevel-1][(y+j)*(Nowlevel+1)*2+x+i-1]%2==1)
- 355   7                      {
- 356   8                        PicWriting_Overlay(0,wall_2,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
- 357   8                        PicWriting_Overlay(1,wall_2,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
- 358   8                      }
- 359   7                    }
- 360   6                  }
-C51 COMPILER V9.60.7.0   MAIN                                                              11/17/2026 13:33:21 PAGE 7   
+ 417   7                    }     
+ 418   6                  }
+ 419   5                }
+ 420   4              }
+ 421   3              PicWriting_Cover(0,mes[dic],4,4,Ex_x(x),Ex_y(y));
+ 422   3              PicWriting_Cover(1,mes[dic],4,4,Ex_x(x),Ex_y(y));
+C51 COMPILER V9.60.7.0   MAIN                                                              11/17/2026 22:52:09 PAGE 8   
 
- 361   5                }
- 362   4              }
- 363   3              if(FrameNum/10!=CoverMark)
- 364   3              {
- 365   4                CoverMark=FrameNum/10;
- 366   4              }
- 367   3              if(x==NowLevel*2+1 && y==0)
- 368   3              {
- 369   4                if(NowLevel==5)
- 370   4                {
- 371   5                  page=0;
- 372   5                }
- 373   4                else
- 374   4                {
- 375   5                  Refresh(0);
- 376   5                  PicClean(1,128,64,0,0);
- 377   5                  rx=Ex_x(x);ry=Ex_y(y);
- 378   5                  CoverMark=(FrameNum-1)%20;
- 379   5                  for(i=1;i<=2;i++)
- 380   5                  {
- 381   6                    while(CoverMark!=(FrameNum+11)%20);
- 382   6                    PicClean(0,4,4,rx,ry);
- 383   6                    Refresh(0);
- 384   6                    while(CoverMark!=(FrameNum+1)%20);
- 385   6                    PicWriting_Cover(0,mes[dic],4,4,rx,ry);
- 386   6                    Refresh(0);
- 387   6                  }
- 388   5                  while(CoverMark!=(FrameNum+11)%20);
- 389   5                  for(;rx>=64-4*(Nowlevel+2);rx--,ry++)
- 390   5                  {
- 391   6                    PicWriting_Cover(1,mes[dic],4,4,rx,ry);
- 392   6                    Refresh(1);
- 393   6                    PicClean(1,4,4,rx,ry);
- 394   6                  }
- 395   5                  Nowlevel++;
- 396   5                }
- 397   4                PageMark=1;
- 398   4              }
- 399   3              else Refresh(CoverMark);
- 400   3              RefMark=0;
- 401   3              break;
- 402   3          }
- 403   2        }
- 404   1      }
+ 423   3              for(i=0;i<3;i++)
+ 424   3              {
+ 425   4                for(j=0;j<3;j++)
+ 426   4                {
+ 427   5                  if(i==1 && j==1) continue;
+ 428   5                  if((x+i-1)>=0 && (x+i-1)<=(NowLevel*2+1) && (y+j-1)>=0 && (y+j-1)<=(NowLevel*2+1))
+ 429   5                  {
+ 430   6                    if(maps[NowLevel-1][(y+j-1)*(Nowlevel+1)*2+x+i-1]%2 ==0)
+ 431   6                    {
+ 432   7                      if(x+i-1==NowLevel*2+1 && y+j-1==0)
+ 433   7                      {
+ 434   8                        PicWriting_Cover(0,final,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 435   8                        PicWriting_Cover(1,final,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 436   8                      }
+ 437   7                      else
+ 438   7                      {
+ 439   8                        PicClean(0,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 440   8                        PicClean(1,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 441   8                      }
+ 442   7                    }
+ 443   6                    else
+ 444   6                    {
+ 445   7                      PicWriting_Cover(0,wall_0,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 446   7                      PicWriting_Cover(1,wall_0,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 447   7                      if(x+i-2>=0 && maps[NowLevel-1][(y+j-1)*(Nowlevel+1)*2+x+i-2]%2==1)
+ 448   7                      {
+ 449   8                        PicWriting_Overlay(0,wall_3,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 450   8                        PicWriting_Overlay(1,wall_3,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 451   8                      }
+ 452   7                      if(x+i<=(NowLevel*2+1) && maps[NowLevel-1][(y+j-1)*(Nowlevel+1)*2+x+i]%2==1)
+ 453   7                      {
+ 454   8                        PicWriting_Overlay(0,wall_4,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 455   8                        PicWriting_Overlay(1,wall_4,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 456   8                      }
+ 457   7                      if(y+j-2>=0 && maps[NowLevel-1][(y+j-2)*(Nowlevel+1)*2+x+i-1]%2==1)
+ 458   7                      {
+ 459   8                        PicWriting_Overlay(0,wall_1,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 460   8                        PicWriting_Overlay(1,wall_1,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 461   8                      }
+ 462   7                      if(y+j<=(NowLevel*2+1) && maps[NowLevel-1][(y+j)*(Nowlevel+1)*2+x+i-1]%2==1)
+ 463   7                      {
+ 464   8                        PicWriting_Overlay(0,wall_2,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 465   8                        PicWriting_Overlay(1,wall_2,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+ 466   8                      }
+ 467   7                    }
+ 468   6                  }
+ 469   5                }
+ 470   4              }
+ 471   3              if(FrameNum/10!=CoverMark)
+ 472   3              {
+ 473   4                CoverMark=FrameNum/10;
+ 474   4              }
+ 475   3              if(x==NowLevel*2+1 && y==0)
+ 476   3              {
+ 477   4                if(NowLevel==5)
+ 478   4                {
+ 479   5                  Refresh(0);
+ 480   5                  CoverMark=(FrameNum-1)%20;
+ 481   5                  for(i=1;i<=2;i++)
+ 482   5                  {
+ 483   6                    while(CoverMark!=(FrameNum+11)%20);
+ 484   6                    PicClean(0,4,4,rx,ry);
+C51 COMPILER V9.60.7.0   MAIN                                                              11/17/2026 22:52:09 PAGE 9   
+
+ 485   6                    Refresh(0);
+ 486   6                    while(CoverMark!=(FrameNum+1)%20);
+ 487   6                    PicWriting_Cover(0,mes[dic],4,4,rx,ry);
+ 488   6                    Refresh(0);
+ 489   6                  }
+ 490   5                  page=3;
+ 491   5                }
+ 492   4                else
+ 493   4                {
+ 494   5                  Refresh(0);
+ 495   5                  PicClean(1,128,64,0,0);
+ 496   5                  rx=Ex_x(x);ry=Ex_y(y);
+ 497   5                  CoverMark=(FrameNum-1)%20;
+ 498   5                  for(i=1;i<=2;i++)
+ 499   5                  {
+ 500   6                    while(CoverMark!=(FrameNum+11)%20);
+ 501   6                    PicClean(0,4,4,rx,ry);
+ 502   6                    Refresh(0);
+ 503   6                    while(CoverMark!=(FrameNum+1)%20);
+ 504   6                    PicWriting_Cover(0,mes[dic],4,4,rx,ry);
+ 505   6                    Refresh(0);
+ 506   6                  }
+ 507   5                  while(CoverMark!=(FrameNum+11)%20);
+ 508   5                  for(;rx>=64-4*(Nowlevel+2);rx--,ry++)
+ 509   5                  {
+ 510   6                    PicWriting_Cover(1,mes[dic],4,4,rx,ry);
+ 511   6                    Refresh(1);
+ 512   6                    PicClean(1,4,4,rx,ry);
+ 513   6                  }
+ 514   5                  Nowlevel++;
+ 515   5                }
+ 516   4                PageMark=1;
+ 517   4              }
+ 518   3              else Refresh(CoverMark);
+ 519   3              RefMark=0;
+ 520   3              break;
+ 521   3            case 3:
+ 522   3              if(PageMark==1)
+ 523   3              {
+ 524   4                dat=6;
+ 525   4                Ds1302Write(0xC0,6);
+ 526   4                CoverMark=0;
+ 527   4                PicWriting_Cover(0,Win,64,24,32,16);
+ 528   4                StrWriting(0,"1 To Continue",24,44,0);
+ 529   4                PageMark=0;
+ 530   4              }
+ 531   3              KeyScan();
+ 532   3              if(key[0]==1)
+ 533   3              {
+ 534   4                CoverMark++;
+ 535   4                switch(CoverMark)
+ 536   4                {
+ 537   5                  case 1:
+ 538   5                    PicWriting_Cover(0,Ach1_1,108,24,10,16);
+ 539   5                    PicWriting_Cover(0,Ach1_2,84,24,22,40);
+ 540   5                    break;
+ 541   5                  case 2:
+ 542   5                    PicWriting_Cover(0,Ach2_1,96,24,16,16);
+ 543   5                    PicWriting_Cover(0,Ach2_2,60,24,34,40);
+ 544   5                    break;
+ 545   5                  case 3:
+ 546   5                    page=0;
+C51 COMPILER V9.60.7.0   MAIN                                                              11/17/2026 22:52:09 PAGE 10  
+
+ 547   5                    PageMark=1;
+ 548   5                    break;
+ 549   5                }
+ 550   4              }
+ 551   3              Refresh(0);
+ 552   3              RefMark=0;
+ 553   3              break;
+ 554   3          }
+ 555   2        }
+ 556   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   5451    ----
-   CONSTANT SIZE    =    281    ----
-   XDATA SIZE       =    375    ----
+   CODE SIZE        =   6809    ----
+   CONSTANT SIZE    =    350    ----
+   XDATA SIZE       =    376    ----
    PDATA SIZE       =   ----    ----
    DATA SIZE        =     10       3
    IDATA SIZE       =   ----    ----

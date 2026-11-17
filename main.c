@@ -4,7 +4,7 @@
 #include"Keyboard.h"
 #include"ds1302.h"
 #define Nowlevel NowLevel
-unsigned char xdata RefMark=0,FrameNum=0,dic=0,page=0,PageMark=1,dat,NowLevel;
+unsigned char xdata RefMark=0,FrameNum=0,dic=0,page=0,PageMark=1,dat,NowLevel,ModeMark=1;
 //RefMark：帧刷新标志；FrameNum：第几帧；dic：朝向；page：第几页；PageMark：翻页标志；CoverMark：封面标识；dat：存档；NowLevel：当前关卡；sel：选项标志；
 unsigned char code title[][20]=
 {
@@ -169,7 +169,12 @@ void main()
 					else if(dat<=5)
 					{
 						page=1;
+						CoverMark=0;
 						NowLevel=dat;
+					}
+					else
+					{
+						page=1;
 					}
 					PageMark=1;
 					break;
@@ -185,31 +190,120 @@ void main()
 				if(PageMark==1)
 				{
 					dic=3;
-					StrWriting(0,"MENU",48,0,0);
-					StrWriting(0,"Continue",32,16,0);
-					StrWriting(0,"Reset",44,32,0);
+					if(CoverMark==0)
+					{
+						StrWriting(0,"MENU",48,0,0);
+						sel=0;
+						switch(dat)
+						{
+							case 1:
+							case 2:
+							case 3:
+							case 4:
+							case 5:
+								StrWriting(0,"Continue",32,16,0);
+								StrWriting(0,"Reset",44,32,0);
+								break;
+							case 6:
+								StrWriting(0,"Selection",28,16,0);
+								StrWriting(0,"Reset",44,32,0);
+								break;
+						}
+					}
+					else if(CoverMark==1)
+					{
+						sel=0;
+						StrWriting(0,"1      2",32,16,0);
+						StrWriting(0,"3      4",32,16,0);
+						StrWriting(0,"5      6",32,16,0);
+					}
+					else
+					{
+						sel=1;
+						StrWriting(0,"clear",44,16,0);
+						StrWriting(0,"foggy",44,32,0);
+						StrWriting(0,"blind",44,48,0);
+					}
 					PageMark=0;
 				}
 				KeyScan();
-				sel=(sel+key[5]-key[1])%2;
-				PicClean(0,4,4,38,38);
-				PicClean(0,4,4,26,22);
-				if(sel==0) PicWriting_Cover(0,mes[dic],4,4,26,22);
-				else if(sel==1) PicWriting_Cover(0,mes[dic],4,4,38,38);
 				if(key[0]==1)
 				{
-					if(sel==0)
+					switch(CoverMark)
 					{
-						dic=0;
-						page=2;
-					}
-					else if(sel==1)
-					{
-						Ds1302Write(0xC0,0x00);
-						dat=0;
-						page=0;
+						case 0:
+							if(dat<6)
+							{
+								if(sel==0)
+								{
+									dic=0;
+									page=2;
+								}
+								else
+								{
+									Ds1302Write(0xC0,0x00);
+									dat=0;
+									page=0;
+								}
+							}
+							else
+							{
+								if(sel==0)
+								{
+									CoverMark=1;
+								}
+								else
+								{
+									Ds1302Write(0xC0,0x00);
+									dat=0;
+									page=0;
+								}
+							}
+							break;
+						case 1:
+							NowLevel=sel+1;
+							CoverMark=2;
+							break;
+						case 2:
+							ModeMark=sel;
+							dic=0;
+							page=2;
 					}
 					PageMark=1;
+					break;
+				}
+				switch(CoverMark)
+				{
+					case 0:
+						sel=(sel+key[5]-key[1])%2;
+						if(dat<6)
+						{
+							PicClean(0,4,4,38,38);
+							PicClean(0,4,4,26,22);
+							if(sel==0) PicWriting_Cover(0,mes[dic],4,4,26,22);
+							else if(sel==1) PicWriting_Cover(0,mes[dic],4,4,38,38);
+						}
+						else
+						{
+							PicClean(0,4,4,38,38);
+							PicClean(0,4,4,22,22);
+							if(sel==0) PicWriting_Cover(0,mes[dic],4,4,22,22);
+							else if(sel==1) PicWriting_Cover(0,mes[dic],4,4,38,38);
+						}
+						break;
+					case 1:
+						sel=(sel+(key[5]-key[1])*2+(key[6]-key[4]))%6;
+						PicClean(0,4,4,26,22);PicClean(0,4,4,82,22);
+						PicClean(0,4,4,26,38);PicClean(0,4,4,82,38);
+						PicClean(0,4,4,26,54);PicClean(0,4,4,82,54);
+						PicWriting_Cover(0,mes[dic],4,4,26+56*(sel%2),22+16*(sel/2));
+						break;
+					case 2:
+						sel=(sel+key[5]-key[1])%3;
+						PicClean(0,4,4,34,22);
+						PicClean(0,4,4,34,38);
+						PicClean(0,4,4,34,54);
+						PicWriting_Cover(0,mes[dic],4,4,34,22+16*sel);
 				}
 				Refresh(0);
 				RefMark=0;
@@ -217,7 +311,11 @@ void main()
 			case 2:
 				if(PageMark==1)
 				{
-					Ds1302Write(0xC0,NowLevel);
+					if(dat<6)
+					{
+						dat=NowLevel;
+						Ds1302Write(0xC0,NowLevel);
+					}
 					DuoMark=0;
 					StrWriting(0,title[NowLevel-1],0,0,0);
 					StrWriting(1,title[NowLevel-1],0,0,0);
@@ -274,11 +372,21 @@ void main()
 					{
 						if((x+i-1)>=0 && (x+i-1)<=(NowLevel*2+1) && (y+j-1)>=0 && (y+j-1)<=(NowLevel*2+1))
 						{
-							PicWriting_Cover(0,fogs[0],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-							PicWriting_Cover(1,fogs[1],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+							switch(ModeMark)
+							{
+								case 2:
+									PicWriting_Cover(0,blinds[(x+i-1+y+j-1)%2],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+									PicWriting_Cover(1,blinds[(x+i-1+y+j)%2],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+									break;
+								case 1:
+									PicWriting_Cover(0,fogs[0],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+									PicWriting_Cover(1,fogs[1],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+									break;
+							}
 						}
 					}
 				}
+				//上次修改位置：各个模式下地图渲染规则
 				KeyScan();
 				if((x+(key[6]-key[4])>=0) && (x+(key[6]-key[4])<=(NowLevel*2+1)) && (maps[NowLevel-1][y*(Nowlevel+1)*2+(x+key[6]-key[4])])%2 == 0) x=x+(key[6]-key[4]);
 				if((y+(key[5]-key[1])>=0) && (y+(key[5]-key[1])<=(NowLevel*2+1)) && (maps[NowLevel-1][(y+key[5]-key[1])*(Nowlevel+1)*2+x])%2 == 0) y=y+(key[5]-key[1]);
@@ -368,7 +476,18 @@ void main()
 				{
 					if(NowLevel==5)
 					{
-						page=0;
+						Refresh(0);
+						CoverMark=(FrameNum-1)%20;
+						for(i=1;i<=2;i++)
+						{
+							while(CoverMark!=(FrameNum+11)%20);
+							PicClean(0,4,4,rx,ry);
+							Refresh(0);
+							while(CoverMark!=(FrameNum+1)%20);
+							PicWriting_Cover(0,mes[dic],4,4,rx,ry);
+							Refresh(0);
+						}
+						page=3;
 					}
 					else
 					{
@@ -397,6 +516,39 @@ void main()
 					PageMark=1;
 				}
 				else Refresh(CoverMark);
+				RefMark=0;
+				break;
+			case 3:
+				if(PageMark==1)
+				{
+					dat=6;
+					Ds1302Write(0xC0,6);
+					CoverMark=0;
+					PicWriting_Cover(0,Win,64,24,32,16);
+					StrWriting(0,"1 To Continue",24,44,0);
+					PageMark=0;
+				}
+				KeyScan();
+				if(key[0]==1)
+				{
+					CoverMark++;
+					switch(CoverMark)
+					{
+						case 1:
+							PicWriting_Cover(0,Ach1_1,108,24,10,16);
+							PicWriting_Cover(0,Ach1_2,84,24,22,40);
+							break;
+						case 2:
+							PicWriting_Cover(0,Ach2_1,96,24,16,16);
+							PicWriting_Cover(0,Ach2_2,60,24,34,40);
+							break;
+						case 3:
+							page=0;
+							PageMark=1;
+							break;
+					}
+				}
+				Refresh(0);
 				RefMark=0;
 				break;
 		}
