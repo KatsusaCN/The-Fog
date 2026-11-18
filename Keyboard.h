@@ -9,6 +9,5 @@ sbit KeyO3 =P5^0;
 sbit KeyO2 =P3^5;
 sbit KeyO1 =P3^7;
 extern unsigned char key[16],lock[16];
-void Keyinit();
 void KeyScan();
 #endif

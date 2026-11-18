@@ -3,6 +3,7 @@
 #include"pictures.h"
 #include"Keyboard.h"
 #include"ds1302.h"
+#include"Display.h"
 #define Nowlevel NowLevel
 unsigned char xdata RefMark=0,FrameNum=0,dic=0,page=0,PageMark=1,dat,NowLevel,ModeMark=1;
 //RefMark：帧刷新标志；FrameNum：第几帧；dic：朝向；page：第几页；PageMark：翻页标志；CoverMark：封面标识；dat：存档；NowLevel：当前关卡；sel：选项标志；
@@ -87,7 +88,7 @@ unsigned char code map_5_code[]=
 };
 
 unsigned char xdata *(maps[])={map_1,map_2,map_3,map_4,map_5};
-char xdata x,y,CoverMark=1,sel=0;
+char xdata x,y,CoverMark=1,sel=0,NumMark=0;
 int xdata rx,ry; 
 
 void Timer0_Isr(void) interrupt 1
@@ -115,11 +116,83 @@ int Ex_y(unsigned char y)
 	return 40-4*(Nowlevel+1-y);
 }	
 
+unsigned char Judge(x,y)//检验是否为墙体
+{
+	unsigned char k;
+	k=maps[NowLevel-1][(y)*(Nowlevel+1)*2+x];
+	if(k<=3) return k%2;
+	if(NowLevel<=4)
+	{
+		if(k>=4 && k<=6) return (k-3)%2;
+		return (k-6)%2;
+	}
+	if(NowLevel==5)
+	{
+		if(map_5_code[(y)*(Nowlevel+1)*2+x]>=10) return k%2;
+		if(k>=4 && k<=6) return (k-3)%2;
+		return (k-6)%2;
+	}
+	return 0;
+}
+
+void BuildWall(unsigned char x,unsigned char y,unsigned char mode)
+{
+	unsigned char i,j;
+	for(i=0;i<3;i++)
+	{
+		for(j=0;j<3;j++)
+		{
+			if(i==1 && j==1 && mode==1) continue;
+			if((x+i-1)>=0 && (x+i-1)<=(NowLevel*2+1) && (y+j-1)>=0 && (y+j-1)<=(NowLevel*2+1))
+			{
+				if(Judge(x+i-1,y+j-1)==0)
+				{
+					if(x+i-1==NowLevel*2+1 && y+j-1==0)
+					{
+						PicWriting_Cover(0,final,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+						PicWriting_Cover(1,final,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+					}
+					else
+					{
+						PicClean(0,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+						PicClean(1,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+					}
+				}
+				else
+				{
+					PicWriting_Cover(0,wall_0,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+					PicWriting_Cover(1,wall_0,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+					if(x+i-1>=1 && Judge(x+i-2,y+j-1)==1)
+					{
+						PicWriting_Overlay(0,wall_3,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+						PicWriting_Overlay(1,wall_3,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+					}
+					if(x+i<=(NowLevel*2+1) && Judge(x+i,y+j-1)==1)
+					{
+						PicWriting_Overlay(0,wall_4,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+						PicWriting_Overlay(1,wall_4,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+					}
+					if(y+j-1>=1 && Judge(x+i-1,y+j-2)==1)
+					{
+						PicWriting_Overlay(0,wall_1,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+						PicWriting_Overlay(1,wall_1,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+					}
+					if(y+j<=(NowLevel*2+1) && Judge(x+i-1,y+j)==1)
+					{
+						PicWriting_Overlay(0,wall_2,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+						PicWriting_Overlay(1,wall_2,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+					}
+				}
+			}
+		}
+	}
+}
+
 void main()
 {
 	unsigned char i,j,DuoMark;
 	Timer0_Init();
-	Keyinit();
+	DisplayIni();
 	OLEDinit();
 	Refresh(0);
 	dat=DataLoad();
@@ -158,7 +231,7 @@ void main()
 					PageMark=0;
 				}
 				KeyScan();
-				if(key[15]==1) dat=0;
+				//if(key[15]==1) dat=5;
 				if(key[0]==1)
 				{
 					if(dat==0)
@@ -174,9 +247,11 @@ void main()
 					}
 					else
 					{
+						CoverMark=0;
 						page=1;
 					}
 					PageMark=1;
+					RefMark=0;
 					break;
 				}
 				if(FrameNum/10!=CoverMark)
@@ -212,13 +287,15 @@ void main()
 					}
 					else if(CoverMark==1)
 					{
+						StrWriting(0,"Level Selection",4,0,0);
 						sel=0;
 						StrWriting(0,"1      2",32,16,0);
-						StrWriting(0,"3      4",32,16,0);
-						StrWriting(0,"5      6",32,16,0);
+						StrWriting(0,"3      4",32,32,0);
+						StrWriting(0,"5      6",32,48,0);
 					}
 					else
 					{
+						StrWriting(0,"Mode Selection",8,0,0);
 						sel=1;
 						StrWriting(0,"clear",44,16,0);
 						StrWriting(0,"foggy",44,32,0);
@@ -270,6 +347,23 @@ void main()
 							page=2;
 					}
 					PageMark=1;
+					RefMark=0;
+					break;
+				}
+				if(key[2]==1)
+				{
+					switch(CoverMark)
+					{
+						case 0:
+							page=0;
+							break;
+						case 1:
+						case 2:
+							CoverMark--;
+							break;
+					}
+					PageMark=1;
+					RefMark=0;
 					break;
 				}
 				switch(CoverMark)
@@ -292,7 +386,7 @@ void main()
 						}
 						break;
 					case 1:
-						sel=(sel+(key[5]-key[1])*2+(key[6]-key[4]))%6;
+						sel=(sel+(key[5]-key[1])*2+(key[6]-key[4]))%5;
 						PicClean(0,4,4,26,22);PicClean(0,4,4,82,22);
 						PicClean(0,4,4,26,38);PicClean(0,4,4,82,38);
 						PicClean(0,4,4,26,54);PicClean(0,4,4,82,54);
@@ -304,6 +398,7 @@ void main()
 						PicClean(0,4,4,34,38);
 						PicClean(0,4,4,34,54);
 						PicWriting_Cover(0,mes[dic],4,4,34,22+16*sel);
+						break;
 				}
 				Refresh(0);
 				RefMark=0;
@@ -311,6 +406,14 @@ void main()
 			case 2:
 				if(PageMark==1)
 				{
+					if(NowLevel==6)
+					{
+						page=0;
+						PageMark=1;
+						RefMark=0;
+						break;
+					}
+					NumMark=-1;
 					if(dat<6)
 					{
 						dat=NowLevel;
@@ -356,8 +459,57 @@ void main()
 								}
 								else//战争迷雾
 								{
-									PicWriting_Cover(0,fogs[0],4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
-									PicWriting_Cover(1,fogs[1],4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+									switch(ModeMark)
+									{
+										case 0:
+											if(Judge(i-1,j-1)==0)
+											{
+												if(i-1==NowLevel*2+1 && j-1==0)
+												{
+													PicWriting_Cover(0,final,4,4,Ex_x(i-1),Ex_y(j-1));
+													PicWriting_Cover(1,final,4,4,Ex_x(i-1),Ex_y(j-1));
+												}
+												else
+												{
+													PicClean(0,4,4,Ex_x(i-1),Ex_y(j-1));
+													PicClean(1,4,4,Ex_x(i-1),Ex_y(j-1));
+												}
+											}
+											else
+											{
+												PicWriting_Cover(0,wall_0,4,4,Ex_x(i-1),Ex_y(j-1));
+												PicWriting_Cover(1,wall_0,4,4,Ex_x(i-1),Ex_y(j-1));
+												if(i>=2 && Judge(i-2,j-1)==1)
+												{
+													PicWriting_Overlay(0,wall_3,4,4,Ex_x(i-1),Ex_y(j-1));
+													PicWriting_Overlay(1,wall_3,4,4,Ex_x(i-1),Ex_y(j-1));
+												}
+												if(i<=(NowLevel*2+1) && Judge(i,j-1)==1)
+												{
+													PicWriting_Overlay(0,wall_4,4,4,Ex_x(i-1),Ex_y(j-1));
+													PicWriting_Overlay(1,wall_4,4,4,Ex_x(i-1),Ex_y(j-1));
+												}
+												if(j>=2 && Judge(i-1,j-2)==1)
+												{
+													PicWriting_Overlay(0,wall_1,4,4,Ex_x(i-1),Ex_y(j-1));
+													PicWriting_Overlay(1,wall_1,4,4,Ex_x(i-1),Ex_y(j-1));
+												}
+												if(j<=(NowLevel*2+1) && Judge(i-1,j)==1)
+												{
+													PicWriting_Overlay(0,wall_2,4,4,Ex_x(i-1),Ex_y(j-1));
+													PicWriting_Overlay(1,wall_2,4,4,Ex_x(i-1),Ex_y(j-1));
+												}
+											}
+											break;
+										case 1:
+											PicWriting_Cover(0,fogs[0],4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+											PicWriting_Cover(1,fogs[1],4,4,64-(Nowlevel+2-i)*4,40-(Nowlevel+2-j)*4);
+											break;
+										case 2:
+											PicWriting_Cover(0,blinds[(i+j-2)%2],4,4,Ex_x(i-1),Ex_y(j-1));
+											PicWriting_Cover(1,blinds[(i+j-1)%2],4,4,Ex_x(i-1),Ex_y(j-1));
+											break;
+									}
 								}
 							}
 						}
@@ -366,27 +518,30 @@ void main()
 					y=NowLevel*2+1;
 					PageMark=0;
 				}
-				for(i=0;i<3;i++)
+				switch(ModeMark)
 				{
-					for(j=0;j<=3;j++)
-					{
-						if((x+i-1)>=0 && (x+i-1)<=(NowLevel*2+1) && (y+j-1)>=0 && (y+j-1)<=(NowLevel*2+1))
+					case 0:
+						PicClean(0,4,4,Ex_x(x),Ex_y(y));
+						PicClean(1,4,4,Ex_x(x),Ex_y(y));
+						break;
+					case 1:
+						for(i=0;i<3;i++)
 						{
-							switch(ModeMark)
+							for(j=0;j<=3;j++)
 							{
-								case 2:
-									PicWriting_Cover(0,blinds[(x+i-1+y+j-1)%2],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-									PicWriting_Cover(1,blinds[(x+i-1+y+j)%2],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-									break;
-								case 1:
-									PicWriting_Cover(0,fogs[0],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-									PicWriting_Cover(1,fogs[1],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-									break;
+								if((x+i-1)>=0 && (x+i-1)<=(NowLevel*2+1) && (y+j-1)>=0 && (y+j-1)<=(NowLevel*2+1))
+								{
+										PicWriting_Cover(0,fogs[0],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+										PicWriting_Cover(1,fogs[1],4,4,Ex_x(x+i-1),Ex_y(y+j-1));
+								}
 							}
 						}
-					}
+						break;
+					case 2:
+						PicWriting_Cover(0,blinds[(x+y)%2],4,4,Ex_x(x),Ex_y(y));
+						PicWriting_Cover(1,blinds[(x+y+1)%2],4,4,Ex_x(x),Ex_y(y));
 				}
-				//上次修改位置：各个模式下地图渲染规则
+				//上次修改位置：各个模式下地图渲染规则 现已完成
 				KeyScan();
 				if((x+(key[6]-key[4])>=0) && (x+(key[6]-key[4])<=(NowLevel*2+1)) && (maps[NowLevel-1][y*(Nowlevel+1)*2+(x+key[6]-key[4])])%2 == 0) x=x+(key[6]-key[4]);
 				if((y+(key[5]-key[1])>=0) && (y+(key[5]-key[1])<=(NowLevel*2+1)) && (maps[NowLevel-1][(y+key[5]-key[1])*(Nowlevel+1)*2+x])%2 == 0) y=y+(key[5]-key[1]);
@@ -394,12 +549,17 @@ void main()
 				if(key[6]!=key[4]) dic=2+(key[6]-key[4]+1)/2;
 				if((maps[NowLevel-1][y*(Nowlevel+1)*2+x]) == 2)
 				{
+					NumMark--;
 					maps[NowLevel-1][y*(Nowlevel+1)*2+x]=0;
 					for(i=0;i<=Nowlevel*2+1;i++)
 					{
 						for(j=0;j<=Nowlevel*2+1;j++)
 						{
-							if(maps[NowLevel-1][i*(Nowlevel+1)*2+j]>=3) maps[NowLevel-1][i*(Nowlevel+1)*2+j]-=3;
+							if(maps[NowLevel-1][i*(Nowlevel+1)*2+j]>=3)
+							{
+								maps[NowLevel-1][i*(Nowlevel+1)*2+j]-=3;
+								if(maps[NowLevel-1][i*(Nowlevel+1)*2+j]==0 && ModeMark==0) BuildWall(j,i,0);
+							}
 						}
 					}
 				}
@@ -408,112 +568,111 @@ void main()
 					if(DuoMark==0) DuoMark=maps[NowLevel-1][y*(Nowlevel+1)*2+x];
 					else if(maps[NowLevel-1][y*(Nowlevel+1)*2+x] != DuoMark)
 					{
+						NumMark--;
 						for(i=0;i<=Nowlevel*2+1;i++)
 						{
 							for(j=0;j<=Nowlevel*2+1;j++)
 							{
-								if(maps[NowLevel-1][i*(Nowlevel+1)*2+j] == DuoMark+3) maps[NowLevel-1][i*(Nowlevel+1)*2+j]=0;
+								if(maps[NowLevel-1][i*(Nowlevel+1)*2+j] == DuoMark+3) 
+								{
+									maps[NowLevel-1][i*(Nowlevel+1)*2+j]=0;
+									if(ModeMark==0) BuildWall(j,i,0);
+								}
 								if(maps[NowLevel-1][i*(Nowlevel+1)*2+j] == maps[NowLevel-1][y*(Nowlevel+1)*2+x]+3) maps[NowLevel-1][i*(Nowlevel+1)*2+j]=1;
 							}			
 						}
+						maps[NowLevel-1][y*(Nowlevel+1)*2+x]=0;
 					}
 				}
 				PicWriting_Cover(0,mes[dic],4,4,Ex_x(x),Ex_y(y));
 				PicWriting_Cover(1,mes[dic],4,4,Ex_x(x),Ex_y(y));
-				for(i=0;i<3;i++)
+				if(ModeMark==1)
 				{
-					for(j=0;j<3;j++)
-					{
-						if(i==1 && j==1) continue;
-						if((x+i-1)>=0 && (x+i-1)<=(NowLevel*2+1) && (y+j-1)>=0 && (y+j-1)<=(NowLevel*2+1))
-						{
-							if(maps[NowLevel-1][(y+j-1)*(Nowlevel+1)*2+x+i-1]%2 ==0)
-							{
-								if(x+i-1==NowLevel*2+1 && y+j-1==0)
-								{
-									PicWriting_Cover(0,final,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-									PicWriting_Cover(1,final,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-								}
-								else
-								{
-									PicClean(0,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-									PicClean(1,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-								}
-							}
-							else
-							{
-								PicWriting_Cover(0,wall_0,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-								PicWriting_Cover(1,wall_0,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-								if(x+i-2>=0 && maps[NowLevel-1][(y+j-1)*(Nowlevel+1)*2+x+i-2]%2==1)
-								{
-									PicWriting_Overlay(0,wall_3,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-									PicWriting_Overlay(1,wall_3,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-								}
-								if(x+i<=(NowLevel*2+1) && maps[NowLevel-1][(y+j-1)*(Nowlevel+1)*2+x+i]%2==1)
-								{
-									PicWriting_Overlay(0,wall_4,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-									PicWriting_Overlay(1,wall_4,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-								}
-								if(y+j-2>=0 && maps[NowLevel-1][(y+j-2)*(Nowlevel+1)*2+x+i-1]%2==1)
-								{
-									PicWriting_Overlay(0,wall_1,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-									PicWriting_Overlay(1,wall_1,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-								}
-								if(y+j<=(NowLevel*2+1) && maps[NowLevel-1][(y+j)*(Nowlevel+1)*2+x+i-1]%2==1)
-								{
-									PicWriting_Overlay(0,wall_2,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-									PicWriting_Overlay(1,wall_2,4,4,Ex_x(x+i-1),Ex_y(y+j-1));
-								}
-							}
-						}
-					}
+					BuildWall(x,y,1);
 				}
 				if(FrameNum/10!=CoverMark)
 				{
 					CoverMark=FrameNum/10;
+					NumMark=(NumMark+1)%4;
+					NumDisplay(NowLevel,NumMark);
 				}
 				if(x==NowLevel*2+1 && y==0)
 				{
-					if(NowLevel==5)
+					NumMark=-1;
+					if(dat==6)
 					{
 						Refresh(0);
 						CoverMark=(FrameNum-1)%20;
+						rx=Ex_x(x);ry=Ex_y(y);
 						for(i=1;i<=2;i++)
 						{
-							while(CoverMark!=(FrameNum+11)%20);
+							while(CoverMark!=(FrameNum+11)%20) Roll(NumMark);
+							NumMark=(NumMark+1)%4;
 							PicClean(0,4,4,rx,ry);
 							Refresh(0);
-							while(CoverMark!=(FrameNum+1)%20);
+							while(CoverMark!=(FrameNum+1)%20) Roll(NumMark);
+							NumMark=(NumMark+1)%4;
 							PicWriting_Cover(0,mes[dic],4,4,rx,ry);
 							Refresh(0);
 						}
-						page=3;
+						while(CoverMark!=(FrameNum+11)%20) Roll(NumMark);
+						P4=0x00;
+						page=1;
+						CoverMark=1;
+						PageMark=1;
 					}
 					else
 					{
-						Refresh(0);
-						PicClean(1,128,64,0,0);
-						rx=Ex_x(x);ry=Ex_y(y);
-						CoverMark=(FrameNum-1)%20;
-						for(i=1;i<=2;i++)
+						if(NowLevel==5)
 						{
+							Refresh(0);
+							CoverMark=(FrameNum-1)%20;
+							rx=Ex_x(x);ry=Ex_y(y);
+							for(i=1;i<=2;i++)
+							{
+								while(CoverMark!=(FrameNum+11)%20) Roll(NumMark);
+								NumMark=(NumMark+1)%4;
+								PicClean(0,4,4,rx,ry);
+								Refresh(0);
+								while(CoverMark!=(FrameNum+1)%20) Roll(NumMark);
+								NumMark=(NumMark+1)%4;
+								PicWriting_Cover(0,mes[dic],4,4,rx,ry);
+								Refresh(0);
+							}
+							while(CoverMark!=(FrameNum+11)%20) Roll(NumMark);
+							P4=0x00;
+							page=3;
+						}
+						else
+						{
+							Refresh(0);
+							PicClean(1,128,64,0,0);
+							rx=Ex_x(x);ry=Ex_y(y);
+							CoverMark=(FrameNum-1)%20;
+							for(i=1;i<=2;i++)
+							{
+								while(CoverMark!=(FrameNum+11)%20) Roll(NumMark);
+								NumMark=(NumMark+1)%4;
+								PicClean(0,4,4,rx,ry);
+								Refresh(0);
+								while(CoverMark!=(FrameNum+1)%20) Roll(NumMark);
+								NumMark=(NumMark+1)%4;
+								PicWriting_Cover(0,mes[dic],4,4,rx,ry);
+								Refresh(0);
+							}
+							while(CoverMark!=(FrameNum+11)%20) Roll(NumMark);
+							P4=0x00;
 							while(CoverMark!=(FrameNum+11)%20);
-							PicClean(0,4,4,rx,ry);
-							Refresh(0);
-							while(CoverMark!=(FrameNum+1)%20);
-							PicWriting_Cover(0,mes[dic],4,4,rx,ry);
-							Refresh(0);
+							for(;rx>=64-4*(Nowlevel+2);rx--,ry++)
+							{
+								PicWriting_Cover(1,mes[dic],4,4,rx,ry);
+								Refresh(1);
+								PicClean(1,4,4,rx,ry);
+							}
+							Nowlevel++;
 						}
-						while(CoverMark!=(FrameNum+11)%20);
-						for(;rx>=64-4*(Nowlevel+2);rx--,ry++)
-						{
-							PicWriting_Cover(1,mes[dic],4,4,rx,ry);
-							Refresh(1);
-							PicClean(1,4,4,rx,ry);
-						}
-						Nowlevel++;
+						PageMark=1;
 					}
-					PageMark=1;
 				}
 				else Refresh(CoverMark);
 				RefMark=0;
@@ -525,13 +684,14 @@ void main()
 					Ds1302Write(0xC0,6);
 					CoverMark=0;
 					PicWriting_Cover(0,Win,64,24,32,16);
-					StrWriting(0,"1 To Continue",24,44,0);
+					StrWriting(0,"1 To Continue",12,44,0);
 					PageMark=0;
 				}
 				KeyScan();
 				if(key[0]==1)
 				{
 					CoverMark++;
+					PicClean(0,128,48,0,16);
 					switch(CoverMark)
 					{
 						case 1:

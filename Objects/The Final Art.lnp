@@ -3,6 +3,7 @@
 ".\Objects\oled.obj",
 ".\Objects\pictures.obj",
 ".\Objects\Keyboard.obj",
-".\Objects\ds1302.obj" 
+".\Objects\ds1302.obj",
+".\Objects\Display.obj" 
 TO ".\Objects\The Final Art" 
 PRINT(".\Listings\The Final Art.m51") RAMSIZE(256) 
